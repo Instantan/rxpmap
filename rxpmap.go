@@ -58,17 +58,19 @@ func (m *rxpmap) Query(query string) (map[string][]byte, error) {
 	return data, nil
 }
 
-func (m *rxpmap) Listen(ctx context.Context, query string) error {
+func (m *rxpmap) Listen(ctx context.Context, query string, c chan map[string][]byte) error {
 	q, err := parseQuery(query)
 	if err != nil {
 		return err
 	}
 	return m.db.Subscribe(ctx, func(kv *badger.KVList) error {
+		m := map[string][]byte{}
 		parForeach(kv.Kv, func(item *pb.KV) {
 			if q.Matches(parseKey(string(item.Key))) {
-				// notify
+				m[string(item.Key)] = item.Value
 			}
 		})
+		c <- m
 		return nil
 	}, []pb.Match{
 		{

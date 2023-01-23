@@ -53,14 +53,15 @@ func (q *query) parseWildcards(index int, unparsed string) {
 }
 
 func (q query) Matches(key []string) bool {
-	if len(q.data) > len(key) {
+	keylen := len(key)
+	if len(q.data) > keylen {
 		return false
 	}
-	for i := range key {
+	for i := 0; i < keylen; i++ {
 		if ws, ok := q.ws[i]; ok {
 			matches := false
-			for w := range ws {
-				if ws[w].IsMatch(key[i]) {
+			for _, w := range ws {
+				if w.IsMatch(key[i]) {
 					matches = true
 					break
 				}

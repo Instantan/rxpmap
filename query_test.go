@@ -20,7 +20,9 @@ func TestParseKey(t *testing.T) {
 }
 
 func BenchmarkParseKey(b *testing.B) {
-	parseKey("test.place.bla.test")
+	for n := 0; n < b.N; n++ {
+		parseKey("test.place.bla.test")
+	}
 }
 
 func TestParseQuery(t *testing.T) {
@@ -42,4 +44,11 @@ func TestMatches(t *testing.T) {
 
 	assert.False(t, q.Matches(parseKey("test.place.no.test")))
 	assert.True(t, q.Matches(parseKey("test.place.mywildcart.test")))
+}
+
+func BenchmarkMatches(b *testing.B) {
+	q, _ := parseQuery("test.place.[ mywildcar?, mywildcar2 ].test")
+	for n := 0; n < b.N; n++ {
+		q.Matches(parseKey("test.place.mywildcart.test"))
+	}
 }
