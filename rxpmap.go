@@ -7,11 +7,19 @@ import (
 	"github.com/dgraph-io/badger/v3/pb"
 )
 
+type Instance interface {
+	Query(query string) (map[string][]byte, error)
+	Get(key string) ([]byte, bool)
+	Listen(ctx context.Context, query string, c chan map[string][]byte) error
+	Write(key string, value []byte) error
+	WriteBatch(batch map[string][]byte) error
+}
+
 type rxpmap struct {
 	db *badger.DB
 }
 
-func NewPersistent(name string) (*rxpmap, error) {
+func NewPersistent(name string) (Instance, error) {
 	return new(name, false)
 }
 
