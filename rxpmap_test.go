@@ -31,6 +31,27 @@ func TestRxpmap(t *testing.T) {
 	t.Logf("Map: %v", m)
 }
 
+func TestRxpmapQuery(t *testing.T) {
+
+	m, err := rxpmap.NewMemory()
+	assert.NoError(t, err)
+
+	v1Input := []byte("Value1")
+	v2Input := []byte("Value2")
+
+	assert.NoError(t, m.Write("user.Test1", v1Input))
+	assert.NoError(t, m.Write("user.Test2", v2Input))
+
+	_, ok := m.Get("user.Test1")
+	assert.True(t, ok)
+
+	res, err := m.Query("user.[*]")
+	assert.NoError(t, err)
+	assert.Len(t, res, 2)
+
+	t.Logf("Map: %v", m)
+}
+
 func TestRxpmapListen(t *testing.T) {
 
 	m, err := rxpmap.NewMemory()

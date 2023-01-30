@@ -3,6 +3,7 @@ package rxpmap
 import (
 	"context"
 
+	"github.com/Instantan/match"
 	"github.com/dgraph-io/badger/v3"
 	"github.com/dgraph-io/badger/v3/pb"
 )
@@ -42,39 +43,38 @@ func new(name string, inmem bool) (*rxpmap, error) {
 }
 
 func (m *rxpmap) Query(query string) (map[string][]byte, error) {
-	q, err := parseQuery(query)
+	q, err := match.Compile(query)
 	if err != nil {
 		return nil, err
 	}
-	tx := m.db.NewTransaction(false)
-	defer tx.Discard()
-	iter := tx.NewIterator(badger.IteratorOptions{
-		PrefetchValues: false,
-		Prefix:         q.staticPrefix,
-	})
 	data := map[string][]byte{}
-	for iter.Valid() {
-		iter.Next()
-		item := iter.Item()
-		key := item.Key()
-		if q.Matches(parseKey(string(key))) {
-			b := make([]byte, item.ValueSize())
-			item.ValueCopy(b)
-			data[string(key)] = b
+	err = m.db.View(func(txn *badger.Txn) error {
+		it := txn.NewIterator(badger.DefaultIteratorOptions)
+		defer it.Close()
+
+		for it.Seek([]byte("")); it.Valid(); it.Next() {
+			item := it.Item()
+			key := item.Key()
+			if q.Matches(string(key)) {
+				b := make([]byte, item.ValueSize())
+				item.ValueCopy(b)
+				data[string(key)] = b
+			}
 		}
-	}
-	return data, nil
+		return nil
+	})
+	return data, err
 }
 
 func (m *rxpmap) Listen(ctx context.Context, query string, c chan map[string][]byte) error {
-	q, err := parseQuery(query)
+	q, err := match.Compile(query)
 	if err != nil {
 		return err
 	}
 	return m.db.Subscribe(ctx, func(kv *badger.KVList) error {
 		m := map[string][]byte{}
 		parForeach(kv.Kv, func(item *pb.KV) {
-			if q.Matches(parseKey(string(item.Key))) {
+			if q.Matches(string(item.Key)) {
 				m[string(item.Key)] = item.Value
 			}
 		})
@@ -82,7 +82,7 @@ func (m *rxpmap) Listen(ctx context.Context, query string, c chan map[string][]b
 		return nil
 	}, []pb.Match{
 		{
-			Prefix: q.staticPrefix,
+			Prefix: []byte(""),
 		},
 	})
 }

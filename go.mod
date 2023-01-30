@@ -2,7 +2,10 @@ module github.com/Instantan/rxpmap
 
 go 1.19
 
-require github.com/stretchr/testify v1.8.1
+require (
+	github.com/Instantan/match v0.0.0-20230130092122-dbd74d448c1e
+	github.com/stretchr/testify v1.8.1
+)
 
 require (
 	github.com/cespare/xxhash v1.1.0 // indirect
@@ -23,7 +26,6 @@ require (
 )
 
 require (
-	github.com/becheran/wildmatch-go v1.0.0
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dgraph-io/badger/v3 v3.2103.5
 	github.com/pmezard/go-difflib v1.0.0 // indirect
